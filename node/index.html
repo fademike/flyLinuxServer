@@ -1,0 +1,151 @@
+ <!doctype html> <html> <head>
+    <title>My Math App</title> 
+	<style type="text/css">
+   .card IMG { position: relative; left:0px;}
+   .Compass_main { left: 10px; top: 10px; }
+   .Compass_array { left: -145px; top: 10px; }
+   .card2{
+		float:left;
+		margin:.5em 10px .5em 0;
+		overflow:hidden; 
+		position:relative; 
+		border:1px solid #ccc;
+		width:150px;
+		height:150px;
+	}
+	.card2 img{
+		position:absolute; 
+		
+		left:0px;
+	}
+   .card3{
+		float:left;
+		overflow:hidden; 
+		position:relative; 
+		width:150px;
+		height:180px;
+	}
+	.card3 img{
+		position:absolute; 
+		left:0px;
+	}
+   .air_windows { left: 0px; top: 0px; }
+   .air_pitch { left: 0px; top: -100px; }
+   .air_roll { left: 0px; top: 0px; transform: rotate(15deg);}
+  </style>
+  </head> <body>
+    
+	
+<table border=1>
+<tr>
+	<td>
+		<p class="card3">
+		<img class="Compass_main" id=compass_main src="static/Compass_main.png">
+		<img class="Compass_array" id=compass_array src="static/Compass_array.png">
+		</p>
+		<br>
+		<p class="card2">
+		<img class="air_windows" id=air_windows src="static/Direct_main.png">
+		<img class="air_pitch" id=air_pitch src="/static/Pitch.png">
+		<img class="air_roll" id=air_roll src="/static/Roll.png">
+		</p>
+	</td>
+	<td>
+
+		
+		<table border=1>
+			<tr>
+			<td  align="left" width=100>Rx param</td>
+			<td  align="left" width=100>value</td>
+			<td  align="left" width=100>Tx param</td>
+			<td  align="left" width=100>value</td>
+			</tr>
+			
+			<tr>
+			<td  align="left">voltage(*11/1)</td> <td  align="left" ><div id="voltage">voltage</div></td>
+			<td  align="left">typeManage</td> <td  align="left" ><div id="typeManage">typeManage</div></td>
+			</tr>
+			
+			<tr>
+			<td  align="left"> current </td> <td  align="left" ><div id="current">current</div></td>
+			<td  align="left" >CmdTimeout*10</td> <td  align="left" ><div id="CmdTimeout">CmdTimeout</div></td>
+			</tr>
+			
+			<tr>
+			<td  align="left" >mainMotor</td> 	<td  align="left" ><div id="mainMotor">mainMotor</div></td>
+			<td  align="left" >mainMotor</td><td  align="left" ><div id="tx_mainMotor">mainMotor</div></td>
+			</tr>
+			
+			<tr>
+			<td  align="left" > secondMotor</td> 	<td  align="left" ><div id="secondMotor">secondMotor</div></td>
+			<td  align="left" > secondMotor</td><td  align="left" ><div id="tx_secondMotor">secondMotor</div></td>
+			</tr>
+			
+			<tr>
+			<td  align="left" >servo1</td> 	<td  align="left" ><div id="servo1">servo1</div></td>
+			<td  align="left" >servo1</td> 	<td  align="left" ><div id="tx_servo1">servo1</div></td>
+			</tr>
+			
+			<tr>
+			<td  align="left" > servo2</td> 	<td  align="left" ><div id="servo2">servo2</div></td>
+			<td  align="left" > servo2</td> 	<td  align="left" ><div id="tx_servo2">servo2</div></td>
+			</tr>
+			
+			<tr>
+			<td  align="left" >indication</td> 	<td  align="left" ><div id="indication">indication</div></td>
+			<td  align="left" >tx_indication</td> 	<td  align="left" ><div id="tx_indication">tx_indication</div></td>
+			</tr>
+			
+			<tr>
+			<td  align="left" > temp</td> 	<td  align="left" ><div id="temp">temp</div></td>
+			<td  align="left" > Stab_RPY</td> 	<td  align="left" ><div id="Stab_RPY">Stab RPY</div></td>
+			</tr>
+			
+			
+			<tr>
+			<td  align="left" > press</td> 	<td  align="left" ><div id="press">press</div></td>
+			<td  align="left" > StabA_PR</td> 	<td  align="left" ><div id="StabA_PR">StabA_PR</div></td>
+			</tr>
+			
+			<tr>
+			<td  align="left" > pitch,roll,yaw</td> 	<td  align="left" ><div id="PRY">PRY</div></td>
+			<td  align="left" > Stab_KM</td> 	<td  align="left" ><div id="Stab_KM">Stab_KM</div></td>
+			</tr>
+			
+			<tr>
+			<td  align="left" > time, data</td> 	<td  align="left" ><div id="GPS1">GPS1</div></td>
+			<td  align="left" > Stab_K_CH1,2</td> 	<td  align="left" ><div id="Stab_K_CH">Stab_K_CH</div></td>
+			</tr>
+			
+			<tr>
+				<td  align="left" >long, lat</td> 	<td  align="left" ><div id="GPS2">GPS2</div></td>
+				<td  align="left" >pos_rev, ang1,2</td> 	<td  align="left" ><div id="pos_rev_a1_a2">pos_rev_a1_a2</div></td>
+			</tr>
+			
+			<tr>
+				<td  align="left" >P long, lat</td> 	<td  align="left" ><div id="GPS3">GPS3</div></td>
+				<td  align="left" >StabServoMax1,2</td> 	<td  align="left" ><div id="StabServoMax">StabServoMax</div></td>
+			</tr>
+			
+			<tr>
+				<td  align="left" >speed, hight</td> 	<td  align="left" ><div id="GPS4">GPS4</div></td>
+				<td  align="left" >m_K_ang,bias</td> 	<td  align="left" ><div id="math_K_angle_bias">math_K_angle_bias</div></td>
+			</tr>
+			
+			<tr>
+				<td  align="left" >N_sp,aut,dir_d</td> <td  align="left" ><div id="GPS5">GPS5</div></td>
+				<td  align="left" >m_K_meas,gyro</td> 	<td  align="left" ><div id="m_K_meas_gyro">m_K_meas_gyro</div></td>
+			</tr>
+
+			</table>
+		
+	</td>
+</tr>
+
+</table>
+
+	<script src="/static//jquery.js"></script>
+    <script src="/static/client.js"></script> 
+	</body> 
+	<html>
+

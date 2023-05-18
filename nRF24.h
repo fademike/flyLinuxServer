@@ -57,6 +57,8 @@
 
 unsigned char SPI_RW_Reg(unsigned char reg, unsigned char value);
 int nRF24_init(void);
+unsigned char SPI_Read_Reg(unsigned char reg);
+unsigned char SPI_Read_Buf(unsigned char reg, unsigned char *pBuf, unsigned char bytes);
 void TX_Mode(unsigned char * tx_buf);
 void RX_Mode(void);
 

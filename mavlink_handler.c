@@ -69,6 +69,15 @@ void mavlink_send_param(int n){
 	else if (MAV_DEBUG) printf("param send ans -1\n\r");
 }
 
+void mavlink_send_heartbeat_server(void){	// package for transit system
+	mavlink_message_t msg;
+
+	uint8_t system_status = MAV_STATE_BOOT;
+	uint8_t base_mode = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
+    mavlink_msg_heartbeat_pack(100, 200, &msg, MAV_TYPE_GENERIC, MAV_AUTOPILOT_INVALID, base_mode, 0, system_status);
+	mavlink_send_msg(&msg);
+}
+
 void mavlink_send_heartbeat(void){
 	mavlink_message_t msg;
 

@@ -1,7 +1,7 @@
 
 
 
-void ModemControl_Work(void);
+void ModemControl_Loop(void);
 
 
 void ModemControl_SendPacket(char * buff);

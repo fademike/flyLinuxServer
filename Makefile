@@ -10,8 +10,8 @@ STD=-std=c99 -D_XOPEN_SOURCE=600 -D_POSIX_C_SOURCE=200112L
 
 all: main
 
-main: main.o mavlink_handler.o ModemControl.o nRF24.o spi.o network.o params.o
-	${GCC} main.o mavlink_handler.o ModemControl.o nRF24.o spi.o network.o params.o -o main
+main: main.o mavlink_handler.o ModemControl.o nRF24.o spi.o network.o params.o si4463.o
+	${GCC} main.o mavlink_handler.o ModemControl.o nRF24.o spi.o network.o params.o si4463.o -o main
 
 main.o: main.c
 	${GCC} ${STD} -I ../../include/common -I ${LIB} -c main.c
@@ -27,6 +27,8 @@ params.o: params.c
 	${GCC}  -I ${LIB} -c params.c
 nRF24.o: nRF24.c
 	${GCC} -c nRF24.c
+si4463.o: si4463.c
+	${GCC} -c si4463.c
 spi.o: spi.c
 	${GCC} -c spi.c
 

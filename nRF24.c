@@ -1,7 +1,9 @@
 
 
 #include <stdio.h>
+#include <string.h>
 
+#include "ModemControl.h"
 #include "nRF24.h"
 #include "spi.h"
 
@@ -25,7 +27,7 @@ unsigned char RX_BUF[TX_PLOAD_WIDTH];
 unsigned char TX_BUF[TX_PLOAD_WIDTH];
 
 
-#define CE(x) pio_ce(x)  //HAL_GPIO_WritePin(GPIOB, CE_Pin, x)                 // for rx/tx mode
+#define CE(x) spi_ce(x)  //HAL_GPIO_WritePin(GPIOB, CE_Pin, x)                 // for rx/tx mode
 #define CSN(x) spi_cs(x)  //HAL_GPIO_WritePin(GPIOB, CSN_Pin, x)  // for spi
 #define IRQ 0//HAL_GPIO_ReadPin(GPIOB, IRQ_Pin)
 
@@ -58,7 +60,7 @@ unsigned char  SPI_Write_Buf(unsigned char  reg, unsigned char  *pBuf, unsigned 
 	unsigned char buf_tx[33] = {reg, };
 	unsigned char buf_rx[33] = {0,0};
 	memcpy(&buf_tx[1], pBuf, bytes);
-	spi_txrx(&buf_tx, &buf_rx, bytes+1);
+	spi_txrx(buf_tx, buf_rx, bytes+1);
 	status = buf_rx[0];
 	CSN(1);
 	return(status);
@@ -72,7 +74,7 @@ unsigned char SPI_Read_Buf(unsigned char reg, unsigned char *pBuf, unsigned char
 	
 	unsigned char buf_tx[33] = {reg, };
 	unsigned char buf_rx[33] = {0,0};
-	spi_txrx(&buf_tx, &buf_rx, bytes+1);
+	spi_txrx(buf_tx, buf_rx, bytes+1);
 	status = buf_rx[0];
 
 	memcpy(pBuf, &buf_rx[1], bytes);
@@ -107,8 +109,23 @@ unsigned char SPI_Read_Reg(unsigned char reg)
 	// status=SPI_Receive_byte(0);   //select register  and write value to it
 	spi_txrx(&reg, &status, 1);
 	//CSN(1);
-	return(status);
+	return status;
 }
+
+// void CRC_PacketCalculate(unsigned char * buff){
+// 	unsigned char mCRC = 87;
+// 	int x=0;
+// 	for (x=0;x<30;x++){mCRC += buff[x]*3;}
+// 	buff[30] = mCRC;
+// }
+
+// int CRC_PacketCheck(unsigned char * buff){
+// 	unsigned char mCRC = 87;
+// 	int x=0;
+// 	for (x=0;x<30;x++){mCRC += buff[x]*3;}
+// 	//Printf("CRC 0x%x, 0x%x ",buff[30], mCRC);
+// 	return  (buff[30] == mCRC);
+// }
 
 
 void TX_Mode(unsigned char * tx_buf)
@@ -206,28 +223,10 @@ void NRF24L01_Send(void)
 }
 
 
-#include <fcntl.h>
-
-int f_ce;
-
-int ce_init(){
-	f_ce = open("/root/settings/nrf_ce", O_RDWR);
-	if (f_ce < 0) pabort("can't open device");
-}
-
-#define CE_INVERCE 1
-int pio_ce(int pos){//return 0;	// write "1" to csX means LOW LEVEL csX. write "0" into csX means Hight level cs
-	char res[] = {'0','1'}; 
-	
-  if (CE_INVERCE) write(f_ce, &res[(~pos)&0x1],1);
-	else write(f_ce, &res[pos],1);
-
-	return 0;
-}
 
 
 int nRF24_init(void){
-	ce_init();
+	// ce_init();
 	spi_init();
 
 	CSN(0);

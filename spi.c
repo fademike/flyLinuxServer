@@ -39,7 +39,27 @@ int spi_cs(int pos){//return 0;	// write "1" to csX means LOW LEVEL csX. write "
 	return 0;
 }
 
-int spi_readCmd(char cmd, char * buf, int len)
+
+#include <fcntl.h>
+
+int f_ce;
+
+int ce_init(){
+	f_ce = open("/root/settings/nrf_ce", O_RDWR);
+	if (f_ce < 0) pabort("can't open device");
+}
+
+#define CE_INVERCE 1
+int spi_ce(int pos){//return 0;	// write "1" to csX means LOW LEVEL csX. write "0" into csX means Hight level cs
+	char res[] = {'0','1'}; 
+	
+  if (CE_INVERCE) write(f_ce, &res[(~pos)&0x1],1);
+	else write(f_ce, &res[pos],1);
+
+	return 0;
+}
+
+int spi_readCmd(unsigned char cmd, unsigned char * buf, int len)
 {
 	struct spi_ioc_transfer	xfer[2];
 	//unsigned char		buf[32], *bp;
@@ -67,7 +87,7 @@ int spi_readCmd(char cmd, char * buf, int len)
 }
 
 
-int spi_writeCmd(char cmd, char * buf, int len)
+int spi_writeCmd(unsigned char cmd, unsigned char * buf, int len)
 {
 	struct spi_ioc_transfer	xfer[2];
 	//unsigned char		buf[32], *bp;
@@ -94,7 +114,7 @@ int spi_writeCmd(char cmd, char * buf, int len)
 	}
 }
 
-int spi_txrx(char * buf_tx, char * buf_rx, int num){
+int spi_txrx(unsigned char * buf_tx, unsigned char * buf_rx, int num){
     int ret;
 	/* full-duplex transfer */
 	struct spi_ioc_transfer tr = {
@@ -120,6 +140,7 @@ int spi_init(void){
 	// uint8_t tx[] = { 0x81, 0x18 };
 	// uint8_t rx[] = {0, 0 };
 
+	ce_init();
     
 	f_cs = open("/root/settings/nrf_csn", O_RDWR);
 	if (f_cs < 0) pabort("can't open device");

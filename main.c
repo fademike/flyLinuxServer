@@ -49,7 +49,8 @@ int main(int argc, char* argv[])
 		ret = ModemControl_init();	// init RF part
 		if (ret <0) printf("nRF_init false\n\r");
 		else printf("nRF_init OK\n\r");
-		sleep(1);
+		//sleep(1);
+		usleep(1000*1000);
 	}
 #endif
 

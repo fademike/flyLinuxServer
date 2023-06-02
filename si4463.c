@@ -1,9 +1,10 @@
 /*
  * Si4463.c
  *
- *  Created on: 16 ���� 2016 �.
- *      Author: NASA
+ *  Created on: 16.04.2016.
+ *      Author: fademike
  */
+
 
 #include "ModemControl.h"
 #include "main.h"
@@ -13,19 +14,21 @@
 #include "radio_config_Si4463.h"
 
 
+
 #if defined (STM8)
 #include "stm8s.h"
+#include "spi.h"
 #elif defined (STM32)
-#include "main.h"
+
 #include "stm32f1xx_hal.h"
-
-extern SPI_HandleTypeDef hspiX;
-
-#elif defined (LINUX)
-
 #include "spi.h"
 
+//extern SPI_HandleTypeDef hspiX;
+
+#elif defined (LINUX)
+#include "spi.h"
 #endif
+
 
 
 //extern SPI_HandleTypeDef hspi2;
@@ -35,12 +38,13 @@ uint8_t SPI_TxRxData(uint8_t request){
   uint8_t answer=0;
   //STM8
 #ifdef STM8
-    while(SPI_GetFlagStatus(SPI_FLAG_BSY) != RESET){};
-    SPI_SendData(request);//SPI_SendData(cTemp);//while (SPI_GetFlagStatus(SPI_FLAG_TXE) == RESET){};//HAL_SPI_Transmit(&hspi2, &cTemp, 1, 100);
-    while (SPI_GetFlagStatus(SPI_FLAG_RXNE) == RESET){}; answer = SPI_ReceiveData();
-    //while(SPI_GetFlagStatus(SPI_FLAG_BSY) != RESET){};
+    answer = spi_send_byte(request);
+    // while(SPI_GetFlagStatus(SPI_FLAG_BSY) != RESET){};
+    // SPI_SendData(request);//SPI_SendData(cTemp);//while (SPI_GetFlagStatus(SPI_FLAG_TXE) == RESET){};//HAL_SPI_Transmit(&hspi2, &cTemp, 1, 100);
+    // while (SPI_GetFlagStatus(SPI_FLAG_RXNE) == RESET){}; answer = SPI_ReceiveData();
+    // //while(SPI_GetFlagStatus(SPI_FLAG_BSY) != RESET){};
 #elif defined (STM32)
-    HAL_SPI_TransmitReceive(&hspiX, &request, &answer, 1, 100);
+    spi_txrx(&request, &answer, 1);//HAL_SPI_TransmitReceive(&hspiX, &request, &answer, 1, 100);
 #elif defined (LINUX)
     spi_txrx(&request, &answer, 1);
 #endif
@@ -50,17 +54,21 @@ uint8_t SPI_TxRxData(uint8_t request){
 
 void SPI_Set_NSS(int set)
 {
-#ifdef STM8
-	if(set == 0 ) GPIO_WriteLow(GPIOD, (GPIO_Pin_TypeDef)GPIO_PIN_2);
-	else GPIO_WriteHigh(GPIOD, (GPIO_Pin_TypeDef)GPIO_PIN_2);
-
-#elif defined (STM32)
-	if(set == 0 ) HAL_GPIO_WritePin(SPIX_NSS_GPIO_Port, SPIX_NSS_Pin, GPIO_PIN_RESET);//GPIO_WriteHigh(GPIOD, (GPIO_Pin_TypeDef)GPIO_PIN_2);
-	else HAL_GPIO_WritePin(SPIX_NSS_GPIO_Port, SPIX_NSS_Pin, GPIO_PIN_SET);	// GPIO_WriteHigh(GPIOD, (GPIO_Pin_TypeDef)GPIO_PIN_2);
-#elif defined (LINUX)
     if (set != 0) spi_cs(1);
     else spi_cs(0);
-#endif
+//#ifdef STM8
+//	// if(set == 0 ) GPIO_WriteLow(GPIOD, (GPIO_Pin_TypeDef)GPIO_PIN_2);
+//	// else GPIO_WriteHigh(GPIOD, (GPIO_Pin_TypeDef)GPIO_PIN_2);
+//    if (set != 0) spi_cs(1);
+//    else spi_cs(0);
+//
+//#elif defined (STM32)
+//	if(set == 0 ) HAL_GPIO_WritePin(SPIX_NSS_GPIO_Port, SPIX_NSS_Pin, GPIO_PIN_RESET);//GPIO_WriteHigh(GPIOD, (GPIO_Pin_TypeDef)GPIO_PIN_2);
+//	else HAL_GPIO_WritePin(SPIX_NSS_GPIO_Port, SPIX_NSS_Pin, GPIO_PIN_SET);	// GPIO_WriteHigh(GPIOD, (GPIO_Pin_TypeDef)GPIO_PIN_2);
+//#elif defined (LINUX)
+//    if (set != 0) spi_cs(1);
+//    else spi_cs(0);
+//#endif
 }
 
 
@@ -90,23 +98,24 @@ void SI446X_WAIT_CTS( void )
 
 void SI446X_CMD(uint8_t *cmd, uint8_t cmdsize )
 {
-#ifdef STM8
-    uint8_t i=0;
-#endif
+// #ifdef STM8
+//     uint8_t i=0;
+// #endif
     SI446X_WAIT_CTS( );
     SPI_Set_NSS(0);
 
 #ifdef STM8
-    while(SPI_GetFlagStatus(SPI_FLAG_BSY) != RESET){};
-    while(i<cmdsize){
-    	SPI_SendData(cmd[i]);
-    	while (SPI_GetFlagStatus(SPI_FLAG_RXNE) == RESET){};
-    	SPI_ReceiveData();
-    	i++;
-    	while(SPI_GetFlagStatus(SPI_FLAG_BSY) != RESET){};
-    }
+    spi_txrx(cmd, cmd, cmdsize);
+    // while(SPI_GetFlagStatus(SPI_FLAG_BSY) != RESET){};
+    // while(i<cmdsize){
+    // 	SPI_SendData(cmd[i]);
+    // 	while (SPI_GetFlagStatus(SPI_FLAG_RXNE) == RESET){};
+    // 	SPI_ReceiveData();
+    // 	i++;
+    // 	while(SPI_GetFlagStatus(SPI_FLAG_BSY) != RESET){};
+    // }
 #elif defined (STM32)
-    HAL_SPI_Transmit(&hspiX, cmd, cmdsize, 100);
+    spi_txrx(cmd, cmd, cmdsize);//HAL_SPI_Transmit(&hspiX, cmd, cmdsize, 100);
 #elif defined (LINUX)
     spi_txrx(cmd, cmd, cmdsize);
 #endif
@@ -126,22 +135,27 @@ void SI446X_READ_RESPONSE( uint8_t *buffer, uint8_t size )
     SPI_Set_NSS(0);
     
 #ifdef STM8
-    while(SPI_GetFlagStatus(SPI_FLAG_BSY) != RESET){};
-    SPI_SendData(cTemp);//while (SPI_GetFlagStatus(SPI_FLAG_TXE) == RESET){};//HAL_SPI_Transmit(&hspi2, &cTemp, 1, 100);
-    while (SPI_GetFlagStatus(SPI_FLAG_RXNE) == RESET){};
-    SPI_ReceiveData();
-    while(SPI_GetFlagStatus(SPI_FLAG_BSY) != RESET){};
 
-    while(i<size){SPI_SendData(0x00);while (SPI_GetFlagStatus(SPI_FLAG_RXNE) == RESET){};
+    spi_txrx(&cTemp, &cTemp, 1);
+    spi_txrx(buffer, buffer, size);
+    // while(SPI_GetFlagStatus(SPI_FLAG_BSY) != RESET){};
+    // SPI_SendData(cTemp);//while (SPI_GetFlagStatus(SPI_FLAG_TXE) == RESET){};//HAL_SPI_Transmit(&hspi2, &cTemp, 1, 100);
+    // while (SPI_GetFlagStatus(SPI_FLAG_RXNE) == RESET){};
+    // SPI_ReceiveData();
+    // while(SPI_GetFlagStatus(SPI_FLAG_BSY) != RESET){};
 
-      buffer[i++] = SPI_ReceiveData();}//HAL_SPI_Receive(&hspi2, buffer, size, 100);
+    // while(i<size){SPI_SendData(0x00);while (SPI_GetFlagStatus(SPI_FLAG_RXNE) == RESET){};
+
+    //   buffer[i++] = SPI_ReceiveData();}//HAL_SPI_Receive(&hspi2, buffer, size, 100);
 #elif defined (STM32)
-    HAL_SPI_Transmit(&hspiX, &cTemp, 1, 100);
-    HAL_SPI_Receive(&hspiX, buffer, size, 100);
+//    HAL_SPI_Transmit(&hspiX, &cTemp, 1, 100);
+//    HAL_SPI_Receive(&hspiX, buffer, size, 100);
+    spi_txrx(&cTemp, &cTemp, 1);
+    spi_txrx(buffer, buffer, size);
 #elif defined (LINUX)
     //spi_readCmd(cTemp, buffer, size);
     buffer[0] = 0x44;
-    spi_txrx(buffer, buffer, size);
+    spi_txrx(buffer, buffer, size);     // FIXME to corrected data shifted!!!
 #endif
     SPI_Set_NSS(1);
 }
@@ -405,7 +419,7 @@ uint8_t getStatus(void)
 uint8_t changeState(uint8_t state)
 {
 	switch (state) {
-		case 1:
+		case STATE_RX:
 			SI446X_START_RX(0,0,0,0,3,3);//cmdStartRx(0, 0);
 			break;
 		case 2:
@@ -421,12 +435,27 @@ uint8_t changeState(uint8_t state)
 
 
 uint32_t RFread(uint8_t *data, uint32_t length)
+//int RFread(char * buf)
 {
-	//uint8_t bufferSize = 64;
-	//SI446X_FIFOINFO(&bufferSize, NULL, 0, 0);
-	SI446X_READ_PACKET(data , length);//bufferSize);
-	return length;//bufferSize;
 
+    uint8_t buffer[9];
+    SI446X_INT_STATUS(buffer);
+    uint8_t xStatus = buffer[3];
+
+#if 0		//Add Carrier receive handle to future
+    if ((xStatus&(1<<4))==0){	// GET carrier!?!? defect! need to clear bit.
+    	if ((buffer[6]&0x3) != 0) { return 1;}//thread_ModemControl.t_counter = 0; return;}
+    }
+#endif
+     if ((xStatus&(1<<4))!=0){	 // if there is new package
+
+             SI446X_READ_PACKET(data , length);
+             SI446X_FIFOINFO(0, 0, 1, 1);		// BUFFER CLEAR
+
+             changeState(STATE_RX);
+             return length;
+     }
+	return 0;//bufferSize;
 }
 
 
@@ -450,62 +479,53 @@ uint32_t RFwrite(uint8_t *data, uint8_t length)
 }
 
 
-uint8_t config_table[] = RADIO_CONFIGURATION_DATA_ARRAY;
+const uint8_t config_table[] = RADIO_CONFIGURATION_DATA_ARRAY;
+
 
 
 int RFinit(void)
 {
-#ifdef STM32
-	HAL_GPIO_WritePin(RF_SDN_GPIO_Port, RF_SDN_Pin, GPIO_PIN_SET);	//Shut down on (si4463)
-    HAL_Delay(200);
-    HAL_GPIO_WritePin(RF_SDN_GPIO_Port, RF_SDN_Pin, GPIO_PIN_RESET);	//Shut down off (si4463)
-    HAL_Delay(200);
-#else 
 
-	static int spi_init_fl = 0;
-    if (spi_init_fl == 0){spi_init();spi_init_fl=1;}
-    spi_ce(0);
-usleep(10*1000);
     spi_ce(1);
-usleep(200*1000);
+    msleep(200);
     spi_ce(0);
-usleep(200*1000);
-#endif
+    msleep(200);
 
     unsigned char buffer[16];
-    //do{
 
-        SI446X_PART_INFO(buffer);
+    SI446X_PART_INFO(buffer);
 
-#ifdef SI_POOR_PRINTF
-        Printf_str("Si data is : 0x");
-        Printf_hex(buffer[2]);
-        Printf_str(", 0x");
-        Printf_hex(buffer[3]);
-        Printf_str("\n\r");
-        if ((buffer[2] == 0x44) && (buffer[3]== 0x63)) Printf_str("Dev is si4463\n\r");
-else
-        Printf("Si data is : 0x%x, 0x%x\n\r", buffer[2], buffer[3]);
-        if ((buffer[2] == 0x44) && (buffer[3]== 0x63)) Printf("Dev is si4463\n\r");
-#endif
-
-printf("wait...");
-        Printf("Si data is : 0x%x, 0x%x\n\r", buffer[2], buffer[3]);
-        if ((buffer[2] == 0x44) && (buffer[3]== 0x63)) Printf("Dev is si4463\n\r");
-    //    HAL_Delay(1000);
-    //}while((buffer[3]!= 0x63));
-
-    spi_ce(1);
     if ((buffer[3]!= 0x63)) return -1;
 
-    unsigned int i;
+    unsigned char i;
     unsigned int j = 0;
     while( ( i = config_table[j] ) != 0 )
     {
         j++;
-        SI446X_CMD( &config_table[j], i );
+        //SI446X_CMD( &config_table[j], i );
+        char t_buf[42];
+        int t=0;
+        for (t=0;t<i;t++)t_buf[t] = config_table[j+t];	// copy const to mem	//memcpy(t_buf, &config_table[j], i);
+
+        SI446X_CMD(t_buf, i );
+
         j += i;
     }
+
+
+    //setFrequency(433.3*1000*1000);
+    setPower(0x20);//(0x08);	//(0x7F);
+    SI446X_FIFOINFO(0, 0, 1, 1);		// BUFFER CLEAR
+    changeState(STATE_RX);			// Set state to RX
+
+#if 0	// carrier mode
+        setCarrier(1);
+        char wbuff[64];
+        RFwrite(wbuff, PACKET_LEN);
+
+        while(1){RFwrite(wbuff, PACKET_LEN);};
+#endif
+
     return 0;
 }
 
@@ -513,42 +533,42 @@ printf("wait...");
 
 void setFrequency(int32_t f)
 {
-	uint8_t data_cmd[] = {RF_FREQ_CONTROL_INTE_8};
-	  //unsigned long Constant = 1<<19;
-	uint8_t Array_RF_MODEM_CLKGEN_BAND_1[] = {RF_MODEM_CLKGEN_BAND_1};
-	uint32_t OUTDIV = Array_RF_MODEM_CLKGEN_BAND_1[4]&0x7;
-	  if (OUTDIV == 0) OUTDIV=4;
-	  else if (OUTDIV == 1) OUTDIV=6;
-	  else if (OUTDIV == 2) OUTDIV=8;
-	  else if (OUTDIV == 3) OUTDIV=12;
-	  else if (OUTDIV == 4) OUTDIV=16;
-	  else OUTDIV=24;
+	// uint8_t data_cmd[] = {RF_FREQ_CONTROL_INTE_8};
+	//   //unsigned long Constant = 1<<19;
+	// uint8_t Array_RF_MODEM_CLKGEN_BAND_1[] = {RF_MODEM_CLKGEN_BAND_1};
+	// uint32_t OUTDIV = Array_RF_MODEM_CLKGEN_BAND_1[4]&0x7;
+	//   if (OUTDIV == 0) OUTDIV=4;
+	//   else if (OUTDIV == 1) OUTDIV=6;
+	//   else if (OUTDIV == 2) OUTDIV=8;
+	//   else if (OUTDIV == 3) OUTDIV=12;
+	//   else if (OUTDIV == 4) OUTDIV=16;
+	//   else OUTDIV=24;
 
-	  uint8_t NPRESC = 0;
-	  if(Array_RF_MODEM_CLKGEN_BAND_1[4]&0x8) NPRESC = 2;
-	  else NPRESC = 4;
+	//   uint8_t NPRESC = 0;
+	//   if(Array_RF_MODEM_CLKGEN_BAND_1[4]&0x8) NPRESC = 2;
+	//   else NPRESC = 4;
 
-	  uint32_t freq_xo = RADIO_CONFIGURATION_DATA_RADIO_XO_FREQ;
+	//   uint32_t freq_xo = RADIO_CONFIGURATION_DATA_RADIO_XO_FREQ;
 
-	  uint32_t d = 524288;//1<<19;
-	  uint32_t C = NPRESC*freq_xo / OUTDIV;
+	//   uint32_t d = 524288;//1<<19;
+	//   uint32_t C = NPRESC*freq_xo / OUTDIV;
 
-	  uint32_t result = f%C;
-	  uint32_t inte = (f/C)-1;
+	//   uint32_t result = f%C;
+	//   uint32_t inte = (f/C)-1;
 
-	  uint32_t frac_float = ((float)d/(float)C)* ((float)C + (float)result);
+	//   uint32_t frac_float = ((float)d/(float)C)* ((float)C + (float)result);
 
-	  uint8_t frac_1 = (frac_float>>16)&0xFF;
-	  uint8_t frac_2 = (frac_float>>8)&0xFF;
-	  uint8_t frac_3 = (frac_float>>0)&0xFF;
+	//   uint8_t frac_1 = (frac_float>>16)&0xFF;
+	//   uint8_t frac_2 = (frac_float>>8)&0xFF;
+	//   uint8_t frac_3 = (frac_float>>0)&0xFF;
 
-	  data_cmd[4] = inte&0xFF;
+	//   data_cmd[4] = inte&0xFF;
 
-	  data_cmd[5] = frac_1;
-	  data_cmd[6] = frac_2;
-	  data_cmd[7] = frac_3;
+	//   data_cmd[5] = frac_1;
+	//   data_cmd[6] = frac_2;
+	//   data_cmd[7] = frac_3;
 
-	  SI446X_CMD(&data_cmd[0], 0x0C );
+	//   SI446X_CMD(&data_cmd[0], 0x0C );
 
 }
 

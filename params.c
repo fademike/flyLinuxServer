@@ -8,19 +8,21 @@
 #define HAL_OK 0
 #define HAL_ERROR -1
 
-#define PARAM_ALL 11
+#define PARAM_ALL 13
 
-struct param_struct t_param[PARAM_ALL] = {	{"flash_params", {.FLOAT=0}, MAV_PARAM_TYPE_REAL32},//MAV_PARAM_TYPE_INT8},
-											{"f_kp", {.FLOAT=10.0f}, MAV_PARAM_TYPE_REAL32},
-											{"f_ki", {.FLOAT=0.0f}, MAV_PARAM_TYPE_REAL32},
-											{"pid_pr_p", {.FLOAT=0.3f}, MAV_PARAM_TYPE_REAL32},
-											{"pid_pr_d", {.FLOAT=0.4f}, MAV_PARAM_TYPE_REAL32},
-											{"pid_pr_i", {.FLOAT=0.5f}, MAV_PARAM_TYPE_REAL32},
-											{"mux_pr_chan", {.FLOAT=0.5f}, MAV_PARAM_TYPE_REAL32},
-											{"mux_y_chan", {.FLOAT=0.5f}, MAV_PARAM_TYPE_REAL32},
-											{"pid_y_p", {.FLOAT=0.3f}, MAV_PARAM_TYPE_REAL32},
-											{"pid_y_d", {.FLOAT=0.4f}, MAV_PARAM_TYPE_REAL32},
-											{"pid_y_i", {.FLOAT=0.5f}, MAV_PARAM_TYPE_REAL32} };
+struct param_struct t_param[PARAM_ALL] = {	{"flash_params", {.FLOAT=0}, MAV_PARAM_TYPE_REAL32},	//20		//MAV_PARAM_TYPE_INT8},
+											{"f_kp", {.FLOAT=10.0f}, MAV_PARAM_TYPE_REAL32},		//10
+											{"f_ki", {.FLOAT=0.0f}, MAV_PARAM_TYPE_REAL32},			//0
+											{"pid_pr_p", {.FLOAT=60.0f}, MAV_PARAM_TYPE_REAL32},		//60
+											{"pid_pr_d", {.FLOAT=2000.0f}, MAV_PARAM_TYPE_REAL32},		//2000
+											{"pid_pr_i", {.FLOAT=0.0f}, MAV_PARAM_TYPE_REAL32},		//0
+											{"mux_pr_chan", {.FLOAT=50.0f}, MAV_PARAM_TYPE_REAL32},	//50
+											{"mux_y_chan", {.FLOAT=1.0f}, MAV_PARAM_TYPE_REAL32},	//1
+											{"pid_y_p", {.FLOAT=-60.0f}, MAV_PARAM_TYPE_REAL32},		//-60
+											{"pid_y_d", {.FLOAT=-4000.0f}, MAV_PARAM_TYPE_REAL32},		//-4000
+											{"pid_y_i", {.FLOAT=0.0f}, MAV_PARAM_TYPE_REAL32},		//0
+											{"f_kp_arm", {.FLOAT=0.0f}, MAV_PARAM_TYPE_REAL32},		//0
+											{"p_orientation", {.FLOAT=0.0f}, MAV_PARAM_TYPE_REAL32}};	//0
 
 
 // void params_save(void){

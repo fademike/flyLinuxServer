@@ -2,4 +2,4 @@
 *.o
 main
 .vscode/
-
+*.sh

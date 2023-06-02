@@ -1,8 +1,8 @@
 /*
  * nRF24.h
  *
- *  Created on: 12 ��� 2017 �.
- *      Author: NASA
+ *  Created on: 12.04.2017.
+ *      Author: fademike
  */
 
 #ifndef INC_NRF24_H_
@@ -50,16 +50,35 @@
 #define TX_ADR_WIDTH   	5
 #define TX_PLOAD_WIDTH 	32
 
+
+
 #define	RX_DR			0x40
 #define	TX_DS			0x20
 #define	MAX_RT			0x10
 
+#define CE(x) spi_ce(x);//HAL_GPIO_WritePin(SI_SDN_GPIO_Port, SI_SDN_Pin, x)	//HAL_GPIO_WritePin(GPIOB, CE_Pin, x)
+#define CSN(x) spi_cs(x);// HAL_GPIO_WritePin(SPI1_NSS_GPIO_Port, SPI1_NSS_Pin, x)
+// #define IRQ HAL_GPIO_ReadPin(nRF_IRQ_GPIO_Port, nRF_IRQ_Pin)
+
+
+
+unsigned char SPI_Receive_byte(unsigned char reg);
+unsigned char SPI_Send_byte(unsigned char reg);
+unsigned char SPI_Write_Buf(unsigned char  reg, unsigned char  *pBuf, unsigned char  bytes);
+unsigned char SPI_Read_Buf(unsigned char reg, unsigned char *pBuf, unsigned char bytes);
 
 unsigned char SPI_RW_Reg(unsigned char reg, unsigned char value);
-int nRF24_init(void);
 unsigned char SPI_Read_Reg(unsigned char reg);
-unsigned char SPI_Read_Buf(unsigned char reg, unsigned char *pBuf, unsigned char bytes);
 void TX_Mode(unsigned char * tx_buf);
 void RX_Mode(void);
+
+
+int nRF24_init(void);
+int nRF24_read(unsigned char *data, unsigned int length);
+
+
+//void CRC_PacketCalculate(unsigned char * buff);
+//int CRC_PacketCheck(unsigned char * buff);
+
 
 #endif /* INC_NRF24_H_ */

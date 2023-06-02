@@ -1,8 +1,8 @@
 /*
  * Si4463.h
  *
- *  Created on: 16 ���� 2016 �.
- *      Author: NASA
+ *  Created on: 16.04.2016.
+ *      Author: fademike
  */
 
 #ifndef SRC_SI4463_H_
@@ -16,22 +16,21 @@
 
 //#define STM32 // STM32
 // #define STM32
-#define LINUX // STM32
 
-#ifdef STM8
-#include "stm8s.h"
-#define uint8_t unsigned char
-#define uint16_t unsigned short
-#else
+
+// #ifdef STM8
+// #include "stm8l.h"
+// #define int8_t signed char
+// #define uint8_t unsigned char
+// #define uint16_t unsigned short
+// #define uint32_t unsigned int
+// #define int32_t signed int
+// #else
 #include <stdint.h>
 
-#define hspiX hspi1
-#define SPIX_NSS_GPIO_Port SI_SEL_GPIO_Port // SPI1_NSS_GPIO_Port
-#define SPIX_NSS_Pin SI_SEL_Pin             // SPI1_NSS_Pin
+//#endif
 
-////////////////////////////////////////////////
 
-#endif
 int8_t getLevel(void);
 uint8_t getStatus(void);
 uint8_t changeState(uint8_t state);

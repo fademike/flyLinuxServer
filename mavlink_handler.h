@@ -10,6 +10,7 @@
 void mavlink_receive(char rxdata);
 
 void mavlink_send_heartbeat_server(void);	// package for transit system
+int mavlink_send_reboot_system(char * buf);
 void mavlink_send_status(void);
 void mavlink_send_attitude(void);
 void mavlink_send_battery_status(void);

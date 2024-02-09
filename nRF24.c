@@ -40,7 +40,13 @@ unsigned char RX_BUF[TX_PLOAD_WIDTH];
 unsigned char TX_BUF[TX_PLOAD_WIDTH];
 
 
+static int32_t nRF24_init(void);
+static int32_t nRF24_read(uint8_t *data, uint8_t length);
+static int32_t nRF24_write(uint8_t *data, uint8_t length);
 
+
+#ifdef nRF24
+struct modem_struct rf_nrf24 = {.init = nRF24_init, .read = nRF24_read, .write = nRF24_write,};
 
 
 unsigned char SPI_Receive_byte(unsigned char reg)
@@ -95,10 +101,10 @@ unsigned char SPI_RW_Reg(unsigned char reg, unsigned char value)
 
 unsigned char SPI_Read_Reg(unsigned char reg)
 {
-	unsigned char status, data;
+	unsigned char data;
 	CSN(0);
 
-	status=SPI_Receive_byte(reg); //SPI_Send_byte(reg);
+	SPI_Receive_byte(reg); //SPI_Send_byte(reg);
 	data=SPI_Receive_byte(0);   //select register  and write value to it
 
 	//Printf("reg: 0x%x, status: 0x%x, data: 0x%x\n\r", reg, status, data);
@@ -126,7 +132,7 @@ unsigned char SPI_Read_Reg(unsigned char reg)
 void TX_Mode(unsigned char * tx_buf)
 {//HAL_GPIO_WritePin(PIN_TEST_GPIO_Port, PIN_TEST_Pin, GPIO_PIN_SET);
 	CE(0);
-	CRC_PacketCalculate(tx_buf);
+	//CRC_PacketCalculate(tx_buf);
 
   	SPI_Write_Buf(WRITE_REG_NRF24L01 + TX_ADDR, TX_ADDRESS, TX_ADR_WIDTH);     // {0xb2,0xb2,0xb3,0xb4,0x01}
   	SPI_Write_Buf(WRITE_REG_NRF24L01 + RX_ADDR_P0, TX_ADDRESS, TX_ADR_WIDTH);  // address 5 byte is {0xb2,0xb2,0xb3,0xb4,0x01} to pipe 0
@@ -163,8 +169,13 @@ void RX_Mode(void)
 }
 
 
+static int32_t nRF24_write(uint8_t *data, uint8_t length){
+	TX_Mode(data);
+	return 0;
+}
 
-int nRF24_read(unsigned char *data, unsigned int length){
+
+static int32_t nRF24_read(uint8_t *data, uint8_t length){
 
 	unsigned char status = SPI_Read_Reg(STATUS);
 
@@ -172,13 +183,14 @@ int nRF24_read(unsigned char *data, unsigned int length){
 
 	SPI_RW_Reg(WRITE_REG_NRF24L01 + STATUS, 0x40);
 
-	unsigned char fifo_status = 0;
+	// unsigned char fifo_status = 0;
 		//do{
 		unsigned char rbuff[TX_PLOAD_WIDTH];
 
 		SPI_Read_Buf(RD_RX_PLOAD,rbuff,TX_PLOAD_WIDTH);// read receive payload from RX_FIFO buffer
 
-		fifo_status=SPI_RW_Reg(FIFO_STATUS, 0);
+		// fifo_status=
+		SPI_RW_Reg(FIFO_STATUS, 0);
 		//}while((fifo_status&0x01) != 0x01);	//TODO
 
 		RX_Mode(); // Switch to RX mode
@@ -201,12 +213,12 @@ int nRF24_read(unsigned char *data, unsigned int length){
 
 
 
-int nRF24_init(void){
+static int32_t nRF24_init(void){
 	CE(0);
 
-	unsigned char config =  0x0F, st1, st2;		//0x0f;
+	unsigned char config =  0x0F, st2;		//0x0f;
 
-	st1 = SPI_RW_Reg(WRITE_REG_NRF24L01 + NRF24_CONFIG, config);               // Enable CRC; 2byte CRC; Power UP; PRX;
+	SPI_RW_Reg(WRITE_REG_NRF24L01 + NRF24_CONFIG, config);               // Enable CRC; 2byte CRC; Power UP; PRX;
 
 	st2 = SPI_Read_Reg(NRF24_CONFIG);
 	//Printf("st1=%d, st2=%d\n\r", st1, st2);
@@ -217,3 +229,4 @@ int nRF24_init(void){
   	return 0;
 }
 
+#endif

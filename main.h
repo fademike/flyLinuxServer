@@ -1,7 +1,7 @@
 
 #define LINUX   //LINUX // STM32
 #define nRF24//nRF24	//SI4463
-
+#include <time.h>
 
 //#define Printf printf
 //#define HAL_Delay(x) usleep(x*1000)

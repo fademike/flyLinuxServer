@@ -330,6 +330,8 @@ int main(int argc, char* argv[])
 						char text[50];
 						int ret = mavlink_msg_statustext_get_text(&msg2, text);
 						int len = mavlink_msg_statustext_get_id(&msg2);
+						int ii=0;
+						for (ii=0;ii<len;ii++)if((text[ii] == '\n') || (text[ii] == '\r'))text[ii] = ' ';
 						if (len>49) len = 49;
 						text[len] = '\0';
 						printf("[msg(%d): %s]", len, text);

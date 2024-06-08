@@ -55,7 +55,7 @@ int params_getSize(void){
 	return PARAM_ALL;
 }
 int params_setValue(int n, union param_value value, int type){
-	int t = n-1;
+	int t = n;
 	if ((t<0) || (t>=PARAM_ALL)) return HAL_ERROR;
 	if (type == MAV_PARAM_TYPE_REAL32) t_param[t].param_value.FLOAT = value.FLOAT;
 	else if (type == MAV_PARAM_TYPE_INT8) t_param[t].param_value.INT = (int)value.INT;
@@ -66,7 +66,7 @@ int params_setValue(int n, union param_value value, int type){
 	return HAL_OK;
 }
 int params_getValue(int n, union param_value * value, int type){
-	int t = n-1;
+	int t = n;
 	if ((t<0) || (t>=PARAM_ALL)) return HAL_ERROR;
 	if (type == MAV_PARAM_TYPE_REAL32) value->FLOAT = t_param[t].param_value.FLOAT;
 	else if (type == MAV_PARAM_TYPE_INT8) value->FLOAT = t_param[t].param_value.INT;
@@ -74,7 +74,7 @@ int params_getValue(int n, union param_value * value, int type){
 	return HAL_OK;
 }
 int params_getParam(int n, struct param_struct * param){
-	int t = n-1;
+	int t = n;
 	if ((t<0) || (t>=PARAM_ALL)) return HAL_ERROR;
 	*param = t_param[t];
 	return HAL_OK;

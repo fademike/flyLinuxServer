@@ -16,12 +16,15 @@
 
 #define BUFFER_LENGTH 2041 // minimum buffer size that can be used with qnx (I don't know why)
 
-#define MAV_DEBUG 1
+#define MAV_DEBUG 0
 
 uint8_t target_system;
 uint8_t target_component;
 
 uint16_t chan[10];
+int16_t ichan[10];
+
+int armed = 0;
 
 uint32_t chan_UpdateTime_ms = 0;
 
@@ -55,15 +58,15 @@ void mavlink_send_param(int n){
 			fvalue = p.param_value.FLOAT;
 		else fvalue = (float)p.param_value.INT;
 
-		mavlink_msg_param_value_pack(1, 200, &msg, p.param_id, fvalue, p.param_type, params_getSize(), n);}
+		mavlink_msg_param_value_pack(1, MAV_COMP_ID_AUTOPILOT1, &msg, p.param_id, fvalue, p.param_type, params_getSize(), n);}
 	// if param none - set none param
-	else mavlink_msg_param_value_pack(1, 200, &msg, NULL, 0, MAV_PARAM_TYPE_REAL32, params_getSize(), -1);
+	else mavlink_msg_param_value_pack(1, MAV_COMP_ID_AUTOPILOT1, &msg, NULL, 0, MAV_PARAM_TYPE_REAL32, params_getSize(), -1);
 
 	mavlink_send_msg(&msg);
 
 	// for debug
 	if (find_fl == 1) {if (MAV_DEBUG) printf("param send ans %d: %d\n\r", n, (int)p.param_value.FLOAT);}
-	else if (MAV_DEBUG) printf("param send ans -1\n\r");
+	else if (MAV_DEBUG) printf("param send ans -1 (%d)\n\r", n);
 }
 
 void mavlink_send_heartbeat_server(void){	// package for transit system
@@ -71,7 +74,19 @@ void mavlink_send_heartbeat_server(void){	// package for transit system
 
 	uint8_t system_status = MAV_STATE_BOOT;
 	uint8_t base_mode = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
-    mavlink_msg_heartbeat_pack(100, 200, &msg, MAV_TYPE_GENERIC, MAV_AUTOPILOT_INVALID, base_mode, 0, system_status);
+
+	// system_status = MAV_STATE_STANDBY;
+	// if (armed == 1) system_status = MAV_STATE_ACTIVE;
+    // mavlink_msg_heartbeat_pack(100, 200, &msg, MAV_TYPE_GENERIC, MAV_AUTOPILOT_INVALID, base_mode, 0, system_status);
+    // mavlink_msg_heartbeat_pack(1, MAV_COMP_ID_AUTOPILOT1, &msg, MAV_TYPE_GENERIC, MAV_AUTOPILOT_GENERIC, base_mode, 0, system_status);
+    mavlink_msg_heartbeat_pack(1, MAV_COMP_ID_AUTOPILOT1, &msg, MAV_TYPE_GENERIC, MAV_AUTOPILOT_GENERIC, base_mode, 0, system_status);
+	
+	//
+	// int armed = MAV_MODE_FLAG_SAFETY_ARMED;
+	// #define SYSTEM_ID 100
+	// 	mavlink_msg_heartbeat_pack(SYSTEM_ID, MAV_COMP_ID_AUTOPILOT1, &msg, MAV_TYPE_GENERIC,
+	// 		MAV_AUTOPILOT_GENERIC, MAV_MODE_FLAG_MANUAL_INPUT_ENABLED | (armed ? MAV_MODE_FLAG_SAFETY_ARMED : 0),
+	// 		0, MAV_STATE_STANDBY);
 	mavlink_send_msg(&msg);
 }
 
@@ -81,7 +96,7 @@ int mavlink_send_reboot_system(char * buf){	// package for transit system
 	uint8_t system_status = MAV_STATE_BOOT;
 	uint8_t base_mode = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
 	
-    mavlink_msg_command_long_pack(100, 200, &msg, 0, 0, MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 0, 3,3,3,3,3,0,0);
+    mavlink_msg_command_long_pack(1, MAV_COMP_ID_AUTOPILOT1, &msg, 0, 0, MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 0, 3,3,3,3,3,0,0);
 	int len = mavlink_msg_to_send_buffer(buf, &msg);
 
 	return len;
@@ -92,7 +107,7 @@ void mavlink_send_heartbeat(void){
 
 	uint8_t system_status = MAV_STATE_BOOT;
 	uint8_t base_mode = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
-    mavlink_msg_heartbeat_pack(1, 200, &msg, MAV_TYPE_HELICOPTER, MAV_AUTOPILOT_INVALID, base_mode, 0, system_status);
+    mavlink_msg_heartbeat_pack(1, MAV_COMP_ID_PAIRING_MANAGER, &msg, MAV_TYPE_HELICOPTER, MAV_AUTOPILOT_INVALID, base_mode, 0, system_status);
 	mavlink_send_msg(&msg);
 }
 
@@ -100,7 +115,7 @@ void mavlink_send_status(void){
 	mavlink_message_t msg;
 	int voltage = 4150;	//Battery_getVoltage();
 	int bat = 43;//Battery_getBatPercent();
-	mavlink_msg_sys_status_pack(1, 200, &msg, 0, 0, 0, 500, voltage, -1, bat, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	mavlink_msg_sys_status_pack(1, MAV_COMP_ID_AUTOPILOT1, &msg, 0, 0, 0, 500, voltage, -1, bat, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 	mavlink_send_msg(&msg);
 }
 
@@ -127,14 +142,40 @@ void mavlink_send_attitude(void){
     if (yaw>=(LIMIT_VALUE_DEG*3.14/180))yaw_sig = -1;
     else if (yaw<=-(LIMIT_VALUE_DEG*3.14/180))yaw_sig = 1;
 
-	mavlink_msg_attitude_pack(1, 200, &msg, timer_us*1000, roll, pitch, yaw, 0, 0, 0);
+	mavlink_msg_attitude_pack(1, MAV_COMP_ID_AUTOPILOT1, &msg, timer_us*1000, roll, pitch, yaw, 0, 0, 0);
 	mavlink_send_msg(&msg);
+#define SYSTEM_ID 1
+
+		// const float zeroQuat[] = {0, 0, 0, 0};
+		// mavlink_msg_attitude_quaternion_pack(SYSTEM_ID, MAV_COMP_ID_AUTOPILOT1, &msg,
+		// 	time, 0.8, 0.1, 0.1, 0.1, 0, 0, 0, zeroQuat);
+		// mavlink_send_msg(&msg);
+
+		// mavlink_msg_rc_channels_scaled_pack(SYSTEM_ID, MAV_COMP_ID_AUTOPILOT1, &msg, time, 0,
+		// 	ichan[0] * 10000, ichan[1] * 10000, ichan[2] * 10000,
+		// 	ichan[3] * 10000, ichan[4] * 10000, ichan[5] * 10000,
+		// 	INT16_MAX, INT16_MAX, UINT8_MAX);
+		// mavlink_send_msg(&msg);
+
+		// float actuator[32] = {1,2,3,4};
+		// // memcpy(actuator, motors, sizeof(motors));
+		// mavlink_msg_actuator_output_status_pack(SYSTEM_ID, MAV_COMP_ID_AUTOPILOT1, &msg, time, 4, actuator);
+		// mavlink_send_msg(&msg);
+
+		// float ax=10, ay=20, az=-1000;
+		// float gx = 0, gy=-1, gz=1;
+		// mavlink_msg_scaled_imu_pack(SYSTEM_ID, MAV_COMP_ID_AUTOPILOT1, &msg, time,
+		// 	ax * 1000, ay * 1000, az * 1000,
+		// 	gx * 1000, gy * 1000, gz * 1000,
+		// 	0, 0, 0, 0);
+		// mavlink_send_msg(&msg);
+
 }
 
 void mavlink_send_battery_status(void){
 	mavlink_message_t msg;
 	uint16_t voltages[1] = {4200};
-	mavlink_msg_battery_status_pack(1, 200, &msg, 0, 0, 0, 0, voltages, 0, 0, 0, 45, 0, 0, 0, 0, 0);
+	mavlink_msg_battery_status_pack(1, MAV_COMP_ID_AUTOPILOT1, &msg, 0, 0, 0, 0, voltages, 0, 0, 0, 45, 0, 0, 0, 0, 0);
 	mavlink_send_msg(&msg);
 }
 
@@ -143,14 +184,14 @@ void mavlink_send_time(void){
     static uint64_t time_us=1675674266;
     static uint32_t time_ms=0;
     time_ms+=1000; time_us+=1;
-    mavlink_msg_system_time_pack(1, 200, &msg, time_us, time_ms);
+    mavlink_msg_system_time_pack(1, MAV_COMP_ID_AUTOPILOT1, &msg, time_us, time_ms);
 	mavlink_send_msg(&msg);
 }
 
 // result MAV_RESULT_ACCEPTED
 void mavlink_send_cmd_ack(uint16_t command, uint8_t result, uint8_t progress){
 	mavlink_message_t msg;
-    mavlink_msg_command_ack_pack(1, 200, &msg, command, result, progress, 0, target_system, target_component);
+    mavlink_msg_command_ack_pack(1, MAV_COMP_ID_AUTOPILOT1, &msg, command, result, progress, 0, target_system, target_component);
 	mavlink_send_msg(&msg);
 }
 
@@ -167,12 +208,21 @@ void mavlink_receive(char rxdata){
 	{
 		// Packet received
 		switch (msg.msgid){
+			case MAVLINK_MSG_ID_MANUAL_CONTROL:
+				ichan[0] = mavlink_msg_manual_control_get_z(&msg);
+				ichan[1] = mavlink_msg_manual_control_get_x(&msg);
+				ichan[2] = mavlink_msg_manual_control_get_y(&msg);
+				ichan[3] = mavlink_msg_manual_control_get_r(&msg);
+				printf("MC %d, %d, %d, %d\n\r", ichan[0], ichan[1], ichan[2], ichan[3]);
+
 			case MAVLINK_MSG_ID_RC_CHANNELS_OVERRIDE:
 				chan[0] = mavlink_msg_rc_channels_override_get_chan1_raw(&msg);
 				chan[1] = mavlink_msg_rc_channels_override_get_chan2_raw(&msg);
 				chan[2] = mavlink_msg_rc_channels_override_get_chan3_raw(&msg);
 				chan[3] = mavlink_msg_rc_channels_override_get_chan4_raw(&msg);
 				chan[4] = mavlink_msg_rc_channels_override_get_chan5_raw(&msg);
+
+				printf("CO %d, %d, %d, %d\n\r", chan[0], chan[1], chan[2], chan[3]);
 
 				//chan_UpdateTime_ms = system_getTime_ms();
 				//if (MAV_DEBUG) printf("ch: %d, %d, %d, %d, %d, \n\r", chan[0], chan[1], chan[2], chan[3], chan[4]);
@@ -233,7 +283,7 @@ void mavlink_receive(char rxdata){
 				target_component = mavlink_msg_param_set_get_target_component(&msg);
 
 				int p;
-				for (p=1;p<=params_getSize(); p++){
+				for (p=0;p<params_getSize(); p++){
 					mavlink_send_param(p);
 					if (MAV_DEBUG) printf("reuest read ans %d\n\r", p);
 				}
@@ -242,17 +292,20 @@ void mavlink_receive(char rxdata){
 			case MAVLINK_MSG_ID_HEARTBEAT:
 			{
 				mavlink_send_heartbeat();
-				if (MAV_DEBUG) printf("rx HEARTBEAT\n\r");
+				// if (MAV_DEBUG) printf(".");;//printf("rx HEARTBEAT\n\r");
 				break;
 			}
 			case MAVLINK_MSG_ID_COMMAND_LONG:
 			{
 				uint16_t cmd = mavlink_msg_command_long_get_command(&msg);
+						printf("MAVLINK_MSG_ID_COMMAND_LONG (%d)\n\r", cmd);
 				switch(cmd){
 					case(MAV_CMD_COMPONENT_ARM_DISARM):
 						t_param[1] = mavlink_msg_command_long_get_param1(&msg);
 						mavlink_send_cmd_ack(cmd, MAV_RESULT_ACCEPTED, 100);
 						if (MAV_DEBUG) printf("rx cmd ARM_DISARM %d\n\r", (int)t_param[1]);
+						if ((int)t_param[1]) armed = 1;
+						else armed = 0;
 						//MotorControl_setArm((int)t_param[1]);
 						break;
 					case(MAV_CMD_PREFLIGHT_CALIBRATION):
@@ -266,11 +319,43 @@ void mavlink_receive(char rxdata){
 						//if (t_param[5] != 0) imu_AccCalibrate_run();
 
 						break;
+					case MAV_CMD_REQUEST_PROTOCOL_VERSION:
+						mavlink_send_cmd_ack(cmd, MAV_RESULT_ACCEPTED, 100);
+						{
+							mavlink_message_t msg;
+							mavlink_msg_protocol_version_pack(1, MAV_COMP_ID_AUTOPILOT1, &msg, 200, 200,200, NULL, NULL);
+							mavlink_send_msg(&msg);
+						}
+						break;
+					case MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES:
+						mavlink_send_cmd_ack(cmd, MAV_RESULT_ACCEPTED, 100);
+						{
+							mavlink_message_t msg;
+							mavlink_msg_autopilot_version_pack(1, MAV_COMP_ID_AUTOPILOT1, &msg, 0,0,0,0,0,NULL, NULL, NULL, 0,0,0,NULL);
+							// static inline uint16_t mavlink_msg_autopilot_version_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
+                            //    uint64_t capabilities, 
+							//    uint32_t flight_sw_version, 
+							//    uint32_t middleware_sw_version, 
+							//    uint32_t os_sw_version, 
+							//    uint32_t board_version, 
+							//    const uint8_t *flight_custom_version, 
+							//    const uint8_t *middleware_custom_version, 
+							//    const uint8_t *os_custom_version, 
+							//    uint16_t vendor_id, 
+							//    uint16_t product_id, 
+							//    uint64_t uid, 
+							//    const uint8_t *uid2)
+							mavlink_send_msg(&msg);
+						}
+						break;
+					default:
+						printf("undefined cmd (%d)!!!!!!!!!!!!!!!!!!!!!\n\r", cmd);
+					break;
 				}
 				break;
 			}
 			default:
-				if (MAV_DEBUG) printf("\nReceived packet: SYS: %d, COMP: %d, LEN: %d, MSG ID: %d\n", msg.sysid, msg.compid, msg.len, msg.msgid);
+				//if (MAV_DEBUG) printf("Received packet: SYS: %d, COMP: %d, LEN: %d, MSG ID: %d\n", msg.sysid, msg.compid, msg.len, msg.msgid);
 		}
 	}
 

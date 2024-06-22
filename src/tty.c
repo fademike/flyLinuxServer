@@ -1,12 +1,6 @@
 
-#include <errno.h>
 #include <termios.h>
-#include <stdio.h>
-
 #include <fcntl.h>
-
-
-
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
@@ -18,9 +12,11 @@
 #include <fcntl.h>
 #include <time.h>
 
+#include "cb.h"
 
 static int tty =0;
 
+extern circular_buffer cb_ttyRead;
 
 #define error_message printf
 
@@ -35,8 +31,6 @@ int set_interface_attribs (int fd, int speed, int parity)
 
         cfsetospeed (&tty, speed);
         cfsetispeed (&tty, speed);
-
-// printf("was 0x%x, 0x%x, 0x%x, 0x%d\n\r", tty.c_cflag, tty.c_iflag, tty.c_lflag, tty.c_oflag);
 
         tty.c_cflag = (tty.c_cflag & ~CSIZE) | CS8;     // 8-bit chars
         // disable IGNBRK for mismatched speed tests; otherwise receive break
@@ -60,9 +54,8 @@ int set_interface_attribs (int fd, int speed, int parity)
         tty.c_cflag &= ~CSTOPB;
         //tty.c_cflag &= ~CRTSCTS;
 
-tty.c_iflag &= ~(0x100);//INLCR;
+        tty.c_iflag &= ~(0x100);//INLCR;
 
-// printf("set  0x%x, 0x%x, 0x%x, 0x%d\n\r", tty.c_cflag, tty.c_iflag, tty.c_lflag, tty.c_oflag);
         if (tcsetattr (fd, TCSANOW, &tty) != 0)
         {
                 error_message ("error %d from tcsetattr\n\r", errno);
@@ -107,9 +100,22 @@ void tty_write(char * buf, int len){
 }
 
 int tty_read(char * buf, int len){
-    int n_rx = read (tty, buf, len);
-    return n_rx;
+int n_rx = read (tty, buf, len);
+return n_rx;
 }
 
+void* thread_for_read_from_tty(void *arg)
+{
+        while(1){
+                uint8_t b [100];
+                int n_rx = tty_read(b, sizeof(b)); // read up to 100 characters if ready to read
+                if (n_rx>0) {
+                        if (n_rx >= cb_ttyRead.p_size) n_rx = cb_ttyRead.p_size-1;
+                        cb_write(&cb_ttyRead, b, n_rx);
+                }
+                //else usleep(100);
+        };
+        return NULL;
+}
 
 

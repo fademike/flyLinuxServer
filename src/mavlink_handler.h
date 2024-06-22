@@ -15,5 +15,6 @@ void mavlink_send_status(void);
 void mavlink_send_attitude(void);
 void mavlink_send_battery_status(void);
 void mavlink_send_time(void);
+void mavlink_send_heartbeat_server(void);
 
 //void mavlink_send_msg(mavlink_message_t * msg);

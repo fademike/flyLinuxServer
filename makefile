@@ -16,7 +16,7 @@ INC += -I ./src/mavlink/common
 #OPTIMIZATION=-O0 -g3 -DDEBUG
 OPTIMIZATION=-Os
 
-CCFLAGS = $(OPTIMIZATION) -Wall -c 
+CCFLAGS = $(OPTIMIZATION) -c -w 
 
 LDFLAGS= -lm
 #LDFLAGS+=-Wl,--print-memory-usage
@@ -40,16 +40,15 @@ run: $(NAME)
 
 $(OUTDIR)/%.o: %.c
 	@-mkdir -p $(dir $@)
-	@$(GCC) $(CCFLAGS) $(INC) -c $< -o $@
+	$(GCC) $(CCFLAGS) $(INC) -c $< -o $@
 $(OUTDIR)/%.o: %.s
 	@-mkdir -p  $(dir $@)
 	@$(GCC) $(CCFLAGS) $(INC) -c $< -o $@
 	
 $(NAME): $(OBJECTS)
-	@$(GCC) $(INC) $(LDFLAGS) $(OBJECTS) -o $@
-	@echo link $(NAME) OK
+	$(GCC) $(INC) $(LDFLAGS) $(OBJECTS) -o $@
 	@$(SIZE) $(NAME)
 
 
-	
+
 .PHONY: all

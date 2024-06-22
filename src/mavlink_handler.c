@@ -75,8 +75,8 @@ void mavlink_send_heartbeat_server(void){	// package for transit system
 	uint8_t system_status = MAV_STATE_BOOT;
 	uint8_t base_mode = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
 
-	// system_status = MAV_STATE_STANDBY;
-	// if (armed == 1) system_status = MAV_STATE_ACTIVE;
+	system_status = MAV_STATE_STANDBY;
+	if (armed == 1) system_status = MAV_STATE_ACTIVE;
     // mavlink_msg_heartbeat_pack(100, 200, &msg, MAV_TYPE_GENERIC, MAV_AUTOPILOT_INVALID, base_mode, 0, system_status);
     // mavlink_msg_heartbeat_pack(1, MAV_COMP_ID_AUTOPILOT1, &msg, MAV_TYPE_GENERIC, MAV_AUTOPILOT_GENERIC, base_mode, 0, system_status);
     mavlink_msg_heartbeat_pack(1, MAV_COMP_ID_AUTOPILOT1, &msg, MAV_TYPE_GENERIC, MAV_AUTOPILOT_GENERIC, base_mode, 0, system_status);
@@ -93,7 +93,6 @@ void mavlink_send_heartbeat_server(void){	// package for transit system
 int mavlink_send_reboot_system(char * buf){	// package for transit system
 	mavlink_message_t msg;
 
-	uint8_t system_status = MAV_STATE_BOOT;
 	uint8_t base_mode = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
 	
     mavlink_msg_command_long_pack(1, MAV_COMP_ID_AUTOPILOT1, &msg, 0, 0, MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 0, 3,3,3,3,3,0,0);
@@ -200,7 +199,6 @@ void mavlink_receive(char rxdata){
 	mavlink_message_t msg;
 
 	float t_param[10];
-	uint16_t t_cmd;
 
 	mavlink_status_t status;
 
@@ -209,20 +207,20 @@ void mavlink_receive(char rxdata){
 		// Packet received
 		switch (msg.msgid){
 			case MAVLINK_MSG_ID_MANUAL_CONTROL:
-				ichan[0] = mavlink_msg_manual_control_get_z(&msg);
-				ichan[1] = mavlink_msg_manual_control_get_x(&msg);
-				ichan[2] = mavlink_msg_manual_control_get_y(&msg);
-				ichan[3] = mavlink_msg_manual_control_get_r(&msg);
-				printf("MC %d, %d, %d, %d\n\r", ichan[0], ichan[1], ichan[2], ichan[3]);
+				ichan[0] = mavlink_msg_manual_control_get_z(&msg);	// th 0-1000
+				ichan[1] = mavlink_msg_manual_control_get_x(&msg);	// p -1000 - 1000
+				ichan[2] = mavlink_msg_manual_control_get_y(&msg);	// r -1000 - 1000
+				ichan[3] = mavlink_msg_manual_control_get_r(&msg);	// y -1000 - 1000
+				printf("MC T:%d, P:%d, R:%d, Y:%d\n\r", ichan[0], ichan[1], ichan[2], ichan[3]);
 
 			case MAVLINK_MSG_ID_RC_CHANNELS_OVERRIDE:
-				chan[0] = mavlink_msg_rc_channels_override_get_chan1_raw(&msg);
-				chan[1] = mavlink_msg_rc_channels_override_get_chan2_raw(&msg);
-				chan[2] = mavlink_msg_rc_channels_override_get_chan3_raw(&msg);
-				chan[3] = mavlink_msg_rc_channels_override_get_chan4_raw(&msg);
-				chan[4] = mavlink_msg_rc_channels_override_get_chan5_raw(&msg);
+				ichan[0] = mavlink_msg_rc_channels_override_get_chan1_raw(&msg);	// p -1000 - 1000
+				ichan[1] = mavlink_msg_rc_channels_override_get_chan2_raw(&msg);	// r -1000 - 1000
+				ichan[2] = mavlink_msg_rc_channels_override_get_chan3_raw(&msg);	// th 0-1000
+				ichan[3] = mavlink_msg_rc_channels_override_get_chan4_raw(&msg);	// y -1000 - 1000
+				ichan[4] = mavlink_msg_rc_channels_override_get_chan5_raw(&msg);
 
-				printf("CO %d, %d, %d, %d\n\r", chan[0], chan[1], chan[2], chan[3]);
+				printf("CO P:%d, R:%d, T:%d, Y:%d\n\r", ichan[0], ichan[1], ichan[2], ichan[3]);
 
 				//chan_UpdateTime_ms = system_getTime_ms();
 				//if (MAV_DEBUG) printf("ch: %d, %d, %d, %d, %d, \n\r", chan[0], chan[1], chan[2], chan[3], chan[4]);

@@ -44,7 +44,6 @@ void mavlink_send_msg(mavlink_message_t * msg){
 	network_send(buf, len);
 }
 
-
 void mavlink_send_param(int n){
 	struct param_struct p;
 	int find_fl = 0;
@@ -357,5 +356,24 @@ void mavlink_receive(char rxdata){
 		}
 	}
 
+}
+
+
+char * mavId2str(int id){
+	static char thisId[255] = "";
+	if (id == MAVLINK_MSG_ID_STATUSTEXT) sprintf(thisId, "%s","STATUSTEXT");
+	else if (id == MAVLINK_MSG_ID_HEARTBEAT) sprintf(thisId, "%s","HEARTBEAT");
+	else if (id == MAVLINK_MSG_ID_ATTITUDE) sprintf(thisId, "%s","ATTITUDE");
+	else if (id == MAVLINK_MSG_ID_SYS_STATUS) sprintf(thisId, "%s","SYS_STATUS");
+	else if (id == MAVLINK_MSG_ID_RC_CHANNELS_OVERRIDE) sprintf(thisId, "%s","CHANNELS_OVERRIDE");
+	else if (id == MAVLINK_MSG_ID_BATTERY_STATUS) sprintf(thisId, "%s","BATTERY_STATUS");
+	else if (id == MAVLINK_MSG_ID_PARAM_REQUEST_LIST) sprintf(thisId, "%s","PARAM_REQUEST_LIST");
+	else if (id == MAVLINK_MSG_ID_PARAM_REQUEST_READ) sprintf(thisId, "%s","PARAM_REQUEST_READ");
+	else if (id == MAVLINK_MSG_ID_PARAM_SET) sprintf(thisId, "%s","PARAM_SET");
+	else if (id == MAVLINK_MSG_ID_PARAM_VALUE) sprintf(thisId, "%s","PARAM_VALUE");
+	else {
+		sprintf(thisId, "id %d", id);
+	}
+	return thisId;
 }
 

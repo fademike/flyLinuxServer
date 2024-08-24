@@ -1,7 +1,5 @@
 
 
-
-
 enum {
 	PARAM_FLASH = 0,
 	PARAM_FL_KP = 1,
@@ -13,7 +11,10 @@ enum {
 	PARAM_MUX_Y_CHAN = 7,
 	PARAM_PID_Y_P = 8,
 	PARAM_PID_Y_D = 9,
-	PARAM_PID_Y_I = 10
+	PARAM_PID_Y_I = 10,
+	PARAM_KP_ARM = 11,
+	PARAM_P_ORIENTATION = 12,
+	PARAM_ALL = 13
 };
 
 union param_value{
